@@ -5,7 +5,7 @@ import { Text } from 'react-native-paper';
 export default function Logo() {
   return (
     <View style={styles.container}>
-      <Text style={styles.logoText}>Falaê</Text>
+      <Text style={styles.logoText}>ChatHub</Text>
       <Text style={styles.subtitle}>Conectando pessoas</Text>
     </View>
   );

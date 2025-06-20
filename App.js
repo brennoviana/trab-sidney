@@ -21,7 +21,6 @@ export default function App() {
         <>
           <Logo />
           <Text style={styles.title}>
-            Falaê
           </Text>
         </>
       )}
