@@ -530,15 +530,27 @@ export default function Mensagens(props) {
         <Text style={styles.usernameTop}>
           {showContacts ? 'Contatos' : `Conversa com ${selectedUser?.username}`}
         </Text>
-        {!showContacts && (
+        <View style={styles.headerButtons}>
+          {!showContacts && (
+            <Button
+              mode="text"
+              onPress={() => setShowContacts(true)}
+              style={styles.backButton}
+              compact
+            >
+              Voltar
+            </Button>
+          )}
           <Button
             mode="text"
-            onPress={() => setShowContacts(true)}
-            style={styles.backButton}
+            onPress={() => props.click()}
+            style={styles.logoutButton}
+            compact
+            icon="logout"
           >
-            Voltar
+            Sair
           </Button>
-        )}
+        </View>
       </View>
 
       {showContacts ? (
@@ -555,6 +567,7 @@ export default function Mensagens(props) {
             renderItem={renderMessage}
             keyExtractor={(item) => item.id}
             style={styles.messagesList}
+            contentContainerStyle={styles.messagesContainer}
           />
           <View style={styles.inputContainer}>
             <FileUpload 
@@ -579,31 +592,27 @@ export default function Mensagens(props) {
               </View>
             )}
             <TextInput
-              label="Mensagem"
+              placeholder="Digite sua mensagem..."
               value={message}
               onChangeText={handleTextChange}
               style={styles.input}
               disabled={isUploading}
+              mode="outlined"
+              dense
             />
             <Button 
               mode="contained" 
               onPress={handleSend} 
               style={styles.sendButton}
               disabled={isUploading}
+              icon="send"
+              contentStyle={{ flexDirection: 'row-reverse' }}
             >
               Enviar
             </Button>
           </View>
         </>
       )}
-
-      <Button
-        mode="contained"
-        onPress={() => props.click()}
-        style={styles.button_logout}
-      >
-        Sair
-      </Button>
     </View>
   );
 }
@@ -611,90 +620,120 @@ export default function Mensagens(props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
-    marginTop: 30
+    padding: 0,
+    marginTop: 0,
+    backgroundColor: '#f9f9f9'
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#2196f3',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   usernameTop: {
     fontWeight: 'bold',
-    fontSize: 18
+    fontSize: 18,
+    color: 'white'
   },
   backButton: {
-    marginLeft: 10
+    marginRight: 8,
+  },
+  logoutButton: {
+    marginLeft: 8,
   },
   contactsList: {
-    flex: 1
+    flex: 1,
+    backgroundColor: 'white',
   },
   contactItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee'
+    borderBottomColor: '#f0f0f0',
+    backgroundColor: 'white',
   },
   contactName: {
     marginLeft: 15,
-    fontSize: 16
+    fontSize: 16,
+    color: '#333',
   },
   messagesList: {
-    flex: 1
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+  },
+  messagesContainer: {
+    padding: 10,
+    paddingBottom: 16,
   },
   messageContainer: {
-    marginVertical: 5,
-    maxWidth: '80%'
-  },
-  ownMessage: {
-    alignSelf: 'flex-end'
-  },
-  otherMessage: {
-    alignSelf: 'flex-start'
-  },
-  messageContent: {
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: '#e3f2fd'
+    marginVertical: 4,
+    maxWidth: '80%',
   },
   ownMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: '#e3f2fd'
   },
   otherMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: '#f5f5f5'
+  },
+  messageContent: {
+    padding: 12,
+    borderRadius: 18,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 1,
+  },
+  ownMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#dcf8c6',
+  },
+  otherMessage: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'white',
   },
   messageText: {
-    fontSize: 16
+    fontSize: 16,
+    color: '#333',
   },
   messageTime: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
-    marginTop: 5
+    marginTop: 4,
   },
   readStatus: {
     fontSize: 12,
     color: '#2196f3',
-    marginTop: 2
+    marginTop: 2,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10
+    padding: 8,
+    backgroundColor: 'white',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
   },
   input: {
     flex: 1,
-    marginRight: 10
+    marginRight: 8,
+    backgroundColor: 'white',
   },
   sendButton: {
-    marginLeft: 10
-  },
-  button_logout: {
-    marginTop: 20,
-    backgroundColor: 'red'
+    marginLeft: 4,
+    borderRadius: 20,
   },
   fileContainer: {
     marginBottom: 8,
@@ -702,17 +741,19 @@ const styles = StyleSheet.create({
   fileImage: {
     width: 200,
     height: 200,
-    borderRadius: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
   },
   fileDocument: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    padding: 8,
-    borderRadius: 8,
+    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+    padding: 10,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2196f3',
-    borderStyle: 'dashed',
+    borderColor: 'rgba(33, 150, 243, 0.3)',
+    borderStyle: 'solid',
   },
   fileInfo: {
     flex: 1,
@@ -724,17 +765,21 @@ const styles = StyleSheet.create({
     color: '#2196f3',
   },
   downloadHint: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
     fontStyle: 'italic',
   },
   editContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 4,
   },
   editInput: {
     flex: 1,
     marginRight: 8,
+    backgroundColor: 'white',
   },
   messageFooter: {
     flexDirection: 'row',
@@ -745,9 +790,9 @@ const styles = StyleSheet.create({
   uploadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'rgba(0,0,0,0.05)',
     padding: 8,
-    borderRadius: 8,
+    borderRadius: 16,
     marginRight: 8,
   },
   uploadingText: {
@@ -758,9 +803,9 @@ const styles = StyleSheet.create({
   selectedFileContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e3f2fd',
-    padding: 4,
-    borderRadius: 8,
+    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+    padding: 6,
+    borderRadius: 16,
     marginRight: 8,
     maxWidth: 150,
   },
@@ -768,5 +813,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#2196f3',
     flex: 1,
+  },
+  avatarContainer: {
+    position: 'relative',
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#4CAF50',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  contactInfo: {
+    marginLeft: 10,
+    flex: 1,
+  },
+  statusText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
   },
 });

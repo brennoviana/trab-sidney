@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import { Text, SafeAreaView, StyleSheet } from 'react-native';
+import { Text, SafeAreaView, StyleSheet, View } from 'react-native';
 
 import Mensagens from './components/Mensagens';
 import Login from './components/Login';
@@ -7,8 +7,6 @@ import Logo from './components/Logo';
 
 
 export default function App() {
-
-
   const [opcao,setOpcao] = useState(true);
   const [userName,setUsername] = useState("");
 
@@ -18,14 +16,17 @@ export default function App() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Logo />
-      <Text style={styles.title}>
-        Falaê
-      </Text>
-      
-         {opcao ? <Login click={clickMenu}/> : <Mensagens click={clickMenu} user={userName}/>} 
-      
+    <SafeAreaView style={[styles.container, !opcao && styles.chatContainer]}>
+      {opcao && (
+        <>
+          <Logo />
+          <Text style={styles.title}>
+            Falaê
+          </Text>
+        </>
+      )}
+
+      {opcao ? <Login click={clickMenu}/> : <Mensagens click={clickMenu} user={userName}/>} 
     </SafeAreaView>
   );
 }
@@ -36,6 +37,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#ecf0f1',
     padding: 8,
+  },
+  chatContainer: {
+    padding: 0,
+    justifyContent: 'flex-start',
   },
   paragraph: {
     margin: 24,
