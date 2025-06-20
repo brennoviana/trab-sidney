@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { FlatList, View, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Linking, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { FlatList, View, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Linking, Alert, AppState } from 'react-native';
 import { TextInput, Button, Text, Avatar, IconButton, Menu } from 'react-native-paper';
 import * as FileSystem from 'expo-file-system';
 
@@ -18,6 +18,70 @@ export default function Mensagens(props) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [downloadingFiles, setDownloadingFiles] = useState(new Set());
+  const [onlineUsers, setOnlineUsers] = useState({});
+  const [typingUsers, setTypingUsers] = useState({});
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef(null);
+
+  const updateOnlineStatus = async (isOnline) => {
+    try {
+      const userStatusRef = ref(database, `users/${props.user}/status`);
+      await set(userStatusRef, {
+        online: isOnline,
+        lastSeen: Date.now()
+      });
+    } catch (error) {
+      console.error('Error updating online status:', error);
+    }
+  };
+
+  const updateTypingStatus = async (targetUser, typing) => {
+    if (!targetUser) return;
+    
+    try {
+      const chatId = [props.user, targetUser].sort().join('_');
+      const typingRef = ref(database, `typing/${chatId}/${props.user}`);
+      
+      if (typing) {
+        await set(typingRef, {
+          typing: true,
+          timestamp: Date.now()
+        });
+      } else {
+        await remove(typingRef);
+      }
+    } catch (error) {
+      console.error('Error updating typing status:', error);
+    }
+  };
+
+  const handleTextChange = (text) => {
+    setMessage(text);
+    
+    if (!selectedUser) return;
+    
+    if (text.length > 0 && !isTyping) {
+      setIsTyping(true);
+      updateTypingStatus(selectedUser.username, true);
+    }
+    
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      updateTypingStatus(selectedUser.username, false);
+    }, 2000);
+    
+    if (text.length === 0) {
+      setIsTyping(false);
+      updateTypingStatus(selectedUser.username, false);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    }
+  };
 
   const getFileIcon = (fileName) => {
     if (!fileName) return 'file';
@@ -51,6 +115,70 @@ export default function Mensagens(props) {
         return 'file';
     }
   };
+
+  useEffect(() => {
+    updateOnlineStatus(true);
+
+    const handleAppStateChange = (nextAppState) => {
+      if (nextAppState === 'active') {
+        updateOnlineStatus(true);
+      } else if (nextAppState === 'background' || nextAppState === 'inactive') {
+        updateOnlineStatus(false);
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      updateOnlineStatus(false);
+      subscription?.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    const usersStatusRef = ref(database, 'users');
+    const unsubscribe = onValue(usersStatusRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const onlineData = {};
+        Object.keys(data).forEach(username => {
+          if (data[username].status) {
+            onlineData[username] = data[username].status;
+          }
+        });
+        setOnlineUsers(onlineData);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedUser) return;
+
+    const chatId = [props.user, selectedUser.username].sort().join('_');
+    const typingRef = ref(database, `typing/${chatId}`);
+    
+    const unsubscribe = onValue(typingRef, (snapshot) => {
+      const data = snapshot.val();
+      const typing = {};
+      
+      if (data) {
+        Object.keys(data).forEach(username => {
+          if (username !== props.user && data[username].typing) {
+            const timeDiff = Date.now() - data[username].timestamp;
+            if (timeDiff < 5000) {
+              typing[username] = true;
+            }
+          }
+        });
+      }
+      
+      setTypingUsers(typing);
+    });
+
+    return () => unsubscribe();
+  }, [selectedUser]);
 
   useEffect(() => {
     const usuariosRef = ref(database, '/login');
@@ -103,8 +231,15 @@ export default function Mensagens(props) {
         ...newMessage,
         id: newMessageRef.key
       });
+      
       setMessage('');
       setSelectedFile(null);
+      setIsTyping(false);
+      updateTypingStatus(selectedUser.username, false);
+      
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       alert('Erro ao enviar mensagem');
@@ -219,18 +354,33 @@ export default function Mensagens(props) {
     }
   };
 
-  const renderContact = ({ item }) => (
-    <TouchableOpacity
-      style={styles.contactItem}
-      onPress={() => {
-        setSelectedUser(item);
-        setShowContacts(false);
-      }}
-    >
-      <Avatar.Text size={40} label={item.username.substring(0, 2).toUpperCase()} />
-      <Text style={styles.contactName}>{item.username}</Text>
-    </TouchableOpacity>
-  );
+  const renderContact = ({ item }) => {
+    const isOnline = onlineUsers[item.username]?.online;
+    const lastSeen = onlineUsers[item.username]?.lastSeen;
+    
+    return (
+      <TouchableOpacity
+        style={styles.contactItem}
+        onPress={() => {
+          setSelectedUser(item);
+          setShowContacts(false);
+        }}
+      >
+        <View style={styles.avatarContainer}>
+          <Avatar.Text size={40} label={item.username.substring(0, 2).toUpperCase()} />
+          {isOnline && <View style={styles.onlineIndicator} />}
+        </View>
+        <View style={styles.contactInfo}>
+          <Text style={styles.contactName}>{item.username}</Text>
+          <Text style={styles.statusText}>
+            {isOnline ? 'Online' : 
+             lastSeen ? `Visto ${new Date(lastSeen).toLocaleTimeString()}` : 
+             'Offline'}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderMessage = ({ item }) => {
     const isOwnMessage = item.sender === props.user;
