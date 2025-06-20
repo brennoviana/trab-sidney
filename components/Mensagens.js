@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList, View, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { FlatList, View, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Linking, Alert } from 'react-native';
 import { TextInput, Button, Text, Avatar, IconButton, Menu } from 'react-native-paper';
+import * as FileSystem from 'expo-file-system';
 
-import { database, ref, push, set, onValue, off, remove, update } from '../config/Firebase';
+import { database, ref, push, set, onValue, off, remove, update, get } from '../config/Firebase';
 import FileUpload from './FileUpload';
 
 export default function Mensagens(props) {
@@ -16,6 +17,41 @@ export default function Mensagens(props) {
   const [editingMessage, setEditingMessage] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [downloadingFiles, setDownloadingFiles] = useState(new Set());
+
+  // Get file icon based on file extension
+  const getFileIcon = (fileName) => {
+    if (!fileName) return 'file';
+    
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    
+    switch (extension) {
+      case 'pdf':
+        return 'file-pdf-box';
+      case 'doc':
+      case 'docx':
+        return 'file-word-box';
+      case 'xls':
+      case 'xlsx':
+        return 'file-excel-box';
+      case 'ppt':
+      case 'pptx':
+        return 'file-powerpoint-box';
+      case 'zip':
+      case 'rar':
+        return 'zip-box';
+      case 'txt':
+        return 'file-document';
+      case 'mp3':
+      case 'wav':
+        return 'file-music';
+      case 'mp4':
+      case 'avi':
+        return 'file-video';
+      default:
+        return 'file';
+    }
+  };
 
   // Carregar lista de usuários
   useEffect(() => {
@@ -79,6 +115,110 @@ export default function Mensagens(props) {
     }
   };
 
+  // Baixar documento
+  const downloadDocument = async (file) => {
+    try {
+      console.log('📥 Starting document download for:', file.name);
+      
+      // Add to downloading files set
+      setDownloadingFiles(prev => new Set(prev).add(file.fileId || file.name));
+      
+      if (file.isBase64 && file.fileId) {
+        // Document is stored in database, retrieve it
+        console.log('📄 Retrieving document from database:', file.fileId);
+        
+        const fileRef = ref(database, `photos/${file.fileId}`);
+        const snapshot = await get(fileRef);
+        
+        if (!snapshot.exists()) {
+          Alert.alert('Erro', 'Arquivo não encontrado no banco de dados.');
+          return;
+        }
+        
+        const fileData = snapshot.val();
+        const base64Data = fileData.base64;
+        
+        // Create file path in cache directory
+        const fileName = file.name || 'document';
+        const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+        
+        console.log('💾 Saving file to:', fileUri);
+        
+        // Write base64 to file
+        await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        
+        console.log('✅ File saved successfully');
+        
+        // Show download success and offer to open
+        Alert.alert(
+          'Download Concluído! 📥',
+          `Arquivo "${fileName}" foi salvo.\n\nDeseja abrir o arquivo?`,
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { 
+              text: 'Abrir', 
+              onPress: () => openDocument(fileUri, fileName)
+            }
+          ]
+        );
+        
+      } else {
+        // Handle regular file (if not base64)
+        console.log('📎 Handling regular file');
+        openDocument(file.uri, file.name);
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao baixar documento:', error);
+      Alert.alert('Erro', 'Não foi possível baixar o documento.');
+    } finally {
+      // Remove from downloading files set
+      setDownloadingFiles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(file.fileId || file.name);
+        return newSet;
+      });
+    }
+  };
+
+  // Abrir documento
+  const openDocument = async (fileUri, fileName) => {
+    try {
+      console.log('🔍 Trying to open document:', fileUri);
+      
+      // Check if file exists
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      if (!fileInfo.exists) {
+        Alert.alert('Erro', 'Arquivo não encontrado.');
+        return;
+      }
+      
+      console.log('📄 File info:', fileInfo);
+      
+      // Try to open with system default app
+      const canOpen = await Linking.canOpenURL(fileUri);
+      if (canOpen) {
+        await Linking.openURL(fileUri);
+        console.log('✅ Document opened successfully');
+      } else {
+        // Fallback: show file location
+        Alert.alert(
+          'Arquivo Salvo 📁',
+          `O arquivo "${fileName}" foi salvo em:\n\n${fileUri}\n\nVocê pode acessá-lo pelo gerenciador de arquivos do seu dispositivo.`
+        );
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao abrir documento:', error);
+      Alert.alert(
+        'Arquivo Salvo 📁',
+        `O arquivo "${fileName}" foi salvo com sucesso, mas não foi possível abri-lo automaticamente.\n\nVocê pode encontrá-lo no gerenciador de arquivos.`
+      );
+    }
+  };
+
   // Editar mensagem
   const handleEditMessage = async (messageId, newText) => {
     if (!selectedUser) return;
@@ -128,10 +268,27 @@ export default function Mensagens(props) {
                   resizeMode="cover"
                 />
               ) : (
-                <View style={styles.fileDocument}>
-                  <IconButton icon="file" size={24} />
-                  <Text style={styles.fileName}>{item.file.name}</Text>
-                </View>
+                <TouchableOpacity 
+                  style={styles.fileDocument}
+                  onPress={() => downloadDocument(item.file)}
+                  disabled={downloadingFiles.has(item.file.fileId || item.file.name)}
+                >
+                  <IconButton icon={getFileIcon(item.file.name)} size={24} />
+                  <View style={styles.fileInfo}>
+                    <Text style={styles.fileName}>{item.file.name}</Text>
+                    <Text style={styles.downloadHint}>
+                      {downloadingFiles.has(item.file.fileId || item.file.name) 
+                        ? 'Baixando...' 
+                        : 'Toque para baixar'
+                      }
+                    </Text>
+                  </View>
+                  {downloadingFiles.has(item.file.fileId || item.file.name) ? (
+                    <ActivityIndicator size="small" color="#2196f3" />
+                  ) : (
+                    <IconButton icon="download" size={20} />
+                  )}
+                </TouchableOpacity>
               )}
             </View>
           )}
@@ -388,10 +545,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     padding: 8,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#2196f3',
+    borderStyle: 'dashed',
+  },
+  fileInfo: {
+    flex: 1,
+    marginLeft: 8,
   },
   fileName: {
-    marginLeft: 8,
     fontSize: 14,
+    fontWeight: 'bold',
+    color: '#2196f3',
+  },
+  downloadHint: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
   },
   editContainer: {
     flexDirection: 'row',

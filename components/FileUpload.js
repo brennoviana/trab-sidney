@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { IconButton } from 'react-native-paper';
-import { launchImageLibraryAsync, requestMediaLibraryPermissionsAsync } from 'expo-image-picker';
-import { getDocumentAsync } from 'expo-document-picker';
-import { readAsStringAsync, EncodingType } from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import { database, ref, set } from '../config/Firebase';
 
 export default function FileUpload({ onFileSelect, onUploadStart, onUploadComplete }) {
@@ -35,8 +35,8 @@ export default function FileUpload({ onFileSelect, onUploadStart, onUploadComple
       console.log('Converting file to Base64...');
       
       // Convert file to Base64
-      const base64 = await readAsStringAsync(fileUri, {
-        encoding: EncodingType.Base64,
+      const base64 = await FileSystem.readAsStringAsync(fileUri, {
+        encoding: FileSystem.EncodingType.Base64,
       });
       
       // Check file size (limit to ~3MB for database efficiency)
@@ -70,8 +70,17 @@ export default function FileUpload({ onFileSelect, onUploadStart, onUploadComple
       // Complete upload indicator
       if (onUploadComplete) onUploadComplete();
       
+      // Create appropriate data URI based on file type
+      let dataUri;
+      if (fileType === 'image') {
+        dataUri = `data:image/jpeg;base64,${base64}`;
+      } else {
+        // For documents, use generic data URI
+        dataUri = `data:application/octet-stream;base64,${base64}`;
+      }
+      
       return {
-        uri: `data:image/jpeg;base64,${base64}`, // Create data URI for display
+        uri: dataUri,
         type: fileType,
         name: fileName,
         fileId: fileId,
@@ -96,7 +105,7 @@ export default function FileUpload({ onFileSelect, onUploadStart, onUploadComple
   const pickImage = async () => {
     try {
       // Solicitar permissão para acessar a galeria
-      const { status } = await requestMediaLibraryPermissionsAsync();
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (status !== 'granted') {
         Alert.alert(
@@ -107,23 +116,30 @@ export default function FileUpload({ onFileSelect, onUploadStart, onUploadComple
         return;
       }
 
-      const result = await launchImageLibraryAsync({
-        mediaTypes: 'images',
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         quality: 0.3, // Lower quality for smaller files
         allowsMultipleSelection: false,
       });
 
+      console.log('📷 Image picker result:', result);
+
       if (!result.canceled) {
         const file = result.assets[0];
         const fileName = file.uri.split('/').pop() || `image_${Date.now()}.jpg`;
+        
+        console.log('🖼️ Image selected:', fileName, 'Size:', file.fileSize || 'unknown');
         
         // Try to save with automatic compression if needed
         const savedFile = await saveImageWithAutoCompress(file.uri, fileName);
         
         if (savedFile) {
+          console.log('✅ Image saved successfully');
           onFileSelect(savedFile);
         }
+      } else {
+        console.log('❌ Image selection cancelled');
       }
     } catch (error) {
       console.error('Erro ao selecionar imagem:', error);
@@ -133,21 +149,41 @@ export default function FileUpload({ onFileSelect, onUploadStart, onUploadComple
 
   const pickDocument = async () => {
     try {
-      const result = await getDocumentAsync({
+      console.log('🔍 Opening document picker...');
+      
+      const result = await DocumentPicker.getDocumentAsync({
         type: '*/*',
         copyToCacheDirectory: true,
       });
 
-      if (result.type === 'success') {
+      console.log('📄 Document picker result:', result);
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        console.log('📎 Document selected:', file.name, 'Size:', file.size);
+        
         // Save to Firebase Database as Base64
+        const savedFile = await saveFileToDatabase(file.uri, file.name, 'document');
+        
+        if (savedFile) {
+          console.log('✅ Document saved successfully');
+          onFileSelect(savedFile);
+        }
+      } else if (result.type === 'success') {
+        // Handle old format (expo-document-picker v11 format)
+        console.log('📎 Document selected (legacy format):', result.name, 'Size:', result.size);
+        
         const savedFile = await saveFileToDatabase(result.uri, result.name, 'document');
         
         if (savedFile) {
+          console.log('✅ Document saved successfully');
           onFileSelect(savedFile);
         }
+      } else {
+        console.log('❌ Document selection cancelled');
       }
     } catch (err) {
-      console.error('Erro ao selecionar documento:', err);
+      console.error('❌ Erro ao selecionar documento:', err);
       Alert.alert('Erro', 'Não foi possível selecionar o documento.');
     }
   };
