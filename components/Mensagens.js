@@ -19,7 +19,6 @@ export default function Mensagens(props) {
   const [isUploading, setIsUploading] = useState(false);
   const [downloadingFiles, setDownloadingFiles] = useState(new Set());
 
-  // Get file icon based on file extension
   const getFileIcon = (fileName) => {
     if (!fileName) return 'file';
     
@@ -53,7 +52,6 @@ export default function Mensagens(props) {
     }
   };
 
-  // Carregar lista de usuários
   useEffect(() => {
     const usuariosRef = ref(database, '/login');
     const onValueChange = (snapshot) => {
@@ -67,7 +65,6 @@ export default function Mensagens(props) {
     return () => unsubscribe();
   }, []);
 
-  // Carregar mensagens da conversa selecionada
   useEffect(() => {
     if (!selectedUser) return;
 
@@ -87,7 +84,6 @@ export default function Mensagens(props) {
     return () => unsubscribe();
   }, [selectedUser]);
 
-  // Enviar mensagem
   const handleSend = async () => {
     if ((!message.trim() && !selectedFile) || !selectedUser) return;
 
@@ -115,16 +111,13 @@ export default function Mensagens(props) {
     }
   };
 
-  // Baixar documento
   const downloadDocument = async (file) => {
     try {
       console.log('📥 Starting document download for:', file.name);
       
-      // Add to downloading files set
       setDownloadingFiles(prev => new Set(prev).add(file.fileId || file.name));
       
       if (file.isBase64 && file.fileId) {
-        // Document is stored in database, retrieve it
         console.log('📄 Retrieving document from database:', file.fileId);
         
         const fileRef = ref(database, `photos/${file.fileId}`);
@@ -138,20 +131,17 @@ export default function Mensagens(props) {
         const fileData = snapshot.val();
         const base64Data = fileData.base64;
         
-        // Create file path in cache directory
         const fileName = file.name || 'document';
         const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
         
         console.log('💾 Saving file to:', fileUri);
         
-        // Write base64 to file
         await FileSystem.writeAsStringAsync(fileUri, base64Data, {
           encoding: FileSystem.EncodingType.Base64,
         });
         
         console.log('✅ File saved successfully');
         
-        // Show download success and offer to open
         Alert.alert(
           'Download Concluído! 📥',
           `Arquivo "${fileName}" foi salvo.\n\nDeseja abrir o arquivo?`,
@@ -165,7 +155,6 @@ export default function Mensagens(props) {
         );
         
       } else {
-        // Handle regular file (if not base64)
         console.log('📎 Handling regular file');
         openDocument(file.uri, file.name);
       }
@@ -174,7 +163,6 @@ export default function Mensagens(props) {
       console.error('❌ Erro ao baixar documento:', error);
       Alert.alert('Erro', 'Não foi possível baixar o documento.');
     } finally {
-      // Remove from downloading files set
       setDownloadingFiles(prev => {
         const newSet = new Set(prev);
         newSet.delete(file.fileId || file.name);
@@ -183,12 +171,10 @@ export default function Mensagens(props) {
     }
   };
 
-  // Abrir documento
   const openDocument = async (fileUri, fileName) => {
     try {
       console.log('🔍 Trying to open document:', fileUri);
       
-      // Check if file exists
       const fileInfo = await FileSystem.getInfoAsync(fileUri);
       if (!fileInfo.exists) {
         Alert.alert('Erro', 'Arquivo não encontrado.');
@@ -197,13 +183,11 @@ export default function Mensagens(props) {
       
       console.log('📄 File info:', fileInfo);
       
-      // Try to open with system default app
       const canOpen = await Linking.canOpenURL(fileUri);
       if (canOpen) {
         await Linking.openURL(fileUri);
         console.log('✅ Document opened successfully');
       } else {
-        // Fallback: show file location
         Alert.alert(
           'Arquivo Salvo 📁',
           `O arquivo "${fileName}" foi salvo em:\n\n${fileUri}\n\nVocê pode acessá-lo pelo gerenciador de arquivos do seu dispositivo.`
@@ -219,7 +203,6 @@ export default function Mensagens(props) {
     }
   };
 
-  // Editar mensagem
   const handleEditMessage = async (messageId, newText) => {
     if (!selectedUser) return;
 
@@ -236,7 +219,6 @@ export default function Mensagens(props) {
     }
   };
 
-  // Renderizar contato
   const renderContact = ({ item }) => (
     <TouchableOpacity
       style={styles.contactItem}
@@ -250,7 +232,6 @@ export default function Mensagens(props) {
     </TouchableOpacity>
   );
 
-  // Renderizar mensagem
   const renderMessage = ({ item }) => {
     const isOwnMessage = item.sender === props.user;
     return (

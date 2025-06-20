@@ -7,20 +7,16 @@ import * as FileSystem from 'expo-file-system';
 import { database, ref, set } from '../config/Firebase';
 
 export default function FileUpload({ onFileSelect, onUploadStart, onUploadComplete }) {
-  // Save image with retry on compression
   const saveImageWithAutoCompress = async (originalUri, fileName) => {
     try {
-      // First attempt with normal save
       return await saveFileToDatabase(originalUri, fileName, 'image');
     } catch (error) {
       if (error.message.includes('muito grande')) {
-        // Show helpful message for large files
         Alert.alert(
           'Imagem muito grande', 
           'A imagem selecionada é muito grande (máximo 3MB).\n\n💡 Dicas:\n• Use a opção "Editar" ao selecionar\n• Escolha uma resolução menor\n• Tire uma nova foto com menor qualidade'
         );
       } else {
-        // Re-throw other errors
         throw error;
       }
       return null;
@@ -29,29 +25,24 @@ export default function FileUpload({ onFileSelect, onUploadStart, onUploadComple
 
   const saveFileToDatabase = async (fileUri, fileName, fileType) => {
     try {
-      // Start upload indicator
       if (onUploadStart) onUploadStart();
 
       console.log('Converting file to Base64...');
       
-      // Convert file to Base64
       const base64 = await FileSystem.readAsStringAsync(fileUri, {
         encoding: FileSystem.EncodingType.Base64,
       });
       
-      // Check file size (limit to ~3MB for database efficiency)
-      const sizeLimit = 3 * 1024 * 1024; // 3MB in bytes
-      const estimatedSize = base64.length * 0.75; // Base64 is ~33% larger than original
+      const sizeLimit = 3 * 1024 * 1024;
+      const estimatedSize = base64.length * 0.75;
       
       if (estimatedSize > sizeLimit) {
         throw new Error('Arquivo muito grande. Máximo 3MB.');
       }
       
-      // Create unique ID and metadata
       const timestamp = Date.now();
       const fileId = `${fileType}_${timestamp}`;
       
-      // Prepare data for database
       const fileData = {
         id: fileId,
         name: fileName,
@@ -61,21 +52,17 @@ export default function FileUpload({ onFileSelect, onUploadStart, onUploadComple
         size: estimatedSize
       };
       
-      // Save to Firebase Database
       const fileRef = ref(database, `photos/${fileId}`);
       await set(fileRef, fileData);
       
       console.log('✅ File saved to database successfully!');
       
-      // Complete upload indicator
       if (onUploadComplete) onUploadComplete();
       
-      // Create appropriate data URI based on file type
       let dataUri;
       if (fileType === 'image') {
         dataUri = `data:image/jpeg;base64,${base64}`;
       } else {
-        // For documents, use generic data URI
         dataUri = `data:application/octet-stream;base64,${base64}`;
       }
       
@@ -104,7 +91,6 @@ export default function FileUpload({ onFileSelect, onUploadStart, onUploadComple
 
   const pickImage = async () => {
     try {
-      // Solicitar permissão para acessar a galeria
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (status !== 'granted') {
@@ -119,7 +105,7 @@ export default function FileUpload({ onFileSelect, onUploadStart, onUploadComple
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        quality: 0.3, // Lower quality for smaller files
+        quality: 0.3,
         allowsMultipleSelection: false,
       });
 
@@ -131,7 +117,6 @@ export default function FileUpload({ onFileSelect, onUploadStart, onUploadComple
         
         console.log('🖼️ Image selected:', fileName, 'Size:', file.fileSize || 'unknown');
         
-        // Try to save with automatic compression if needed
         const savedFile = await saveImageWithAutoCompress(file.uri, fileName);
         
         if (savedFile) {
@@ -162,7 +147,6 @@ export default function FileUpload({ onFileSelect, onUploadStart, onUploadComple
         const file = result.assets[0];
         console.log('📎 Document selected:', file.name, 'Size:', file.size);
         
-        // Save to Firebase Database as Base64
         const savedFile = await saveFileToDatabase(file.uri, file.name, 'document');
         
         if (savedFile) {
@@ -170,7 +154,6 @@ export default function FileUpload({ onFileSelect, onUploadStart, onUploadComple
           onFileSelect(savedFile);
         }
       } else if (result.type === 'success') {
-        // Handle old format (expo-document-picker v11 format)
         console.log('📎 Document selected (legacy format):', result.name, 'Size:', result.size);
         
         const savedFile = await saveFileToDatabase(result.uri, result.name, 'document');
