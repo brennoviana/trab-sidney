@@ -529,7 +529,7 @@ export default function Mensagens(props) {
       <View style={styles.header}>
         
         <Text style={styles.usernameTop}>
-          {showContacts ? 'Contatos' : `Conversa com ${selectedUser?.username}`}
+          {showContacts ? 'Contatos' : ` ${selectedUser?.username}`}
         </Text>
         <View style={styles.headerButtons}>
           {!showContacts && (

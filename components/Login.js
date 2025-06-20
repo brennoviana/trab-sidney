@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { database, ref, onValue } from '../config/Firebase';
 import Cadastro from './Cadastro';
@@ -51,8 +51,14 @@ export default function Login(props) {
 
   return (
     <View style={styles.container}>
+      <Image
+        source={require('../assets/logo.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
+
       <Text style={styles.title}>Login</Text>
-      
+
       <TextInput
         label="Usuário"
         value={username}
@@ -60,7 +66,7 @@ export default function Login(props) {
         style={styles.input}
         autoCapitalize="none"
       />
-      
+
       <TextInput
         label="Senha"
         value={senha}
@@ -98,6 +104,12 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
     backgroundColor: '#ecf0f1',
+    alignItems: 'center',
+  },
+  logo: {
+    width: 150,
+    height: 150,
+    marginBottom: 20,
   },
   title: {
     fontSize: 28,
@@ -109,6 +121,7 @@ const styles = StyleSheet.create({
   input: {
     marginBottom: 15,
     backgroundColor: '#ffffff',
+    width: '100%',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: {
@@ -121,6 +134,7 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 15,
     paddingVertical: 8,
+    width: '100%',
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: {
