@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList, View, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { FlatList, View, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { TextInput, Button, Text, Avatar, IconButton, Menu } from 'react-native-paper';
 
 import { database, ref, push, set, onValue, off, remove, update } from '../config/Firebase';
@@ -15,6 +15,7 @@ export default function Mensagens(props) {
   const [showContacts, setShowContacts] = useState(true);
   const [editingMessage, setEditingMessage] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Carregar lista de usuários
   useEffect(() => {
@@ -234,14 +235,40 @@ export default function Mensagens(props) {
             style={styles.messagesList}
           />
           <View style={styles.inputContainer}>
-            <FileUpload onFileSelect={setSelectedFile} />
+            <FileUpload 
+              onFileSelect={setSelectedFile}
+              onUploadStart={() => setIsUploading(true)}
+              onUploadComplete={() => setIsUploading(false)}
+            />
+            {isUploading && (
+              <View style={styles.uploadingContainer}>
+                <ActivityIndicator size="small" color="#2196f3" />
+                <Text style={styles.uploadingText}>Salvando foto...</Text>
+              </View>
+            )}
+            {selectedFile && !isUploading && (
+              <View style={styles.selectedFileContainer}>
+                <Text style={styles.selectedFileText}>📎 {selectedFile.name}</Text>
+                <IconButton
+                  icon="close"
+                  size={16}
+                  onPress={() => setSelectedFile(null)}
+                />
+              </View>
+            )}
             <TextInput
               label="Mensagem"
               value={message}
               onChangeText={setMessage}
               style={styles.input}
+              disabled={isUploading}
             />
-            <Button mode="contained" onPress={handleSend} style={styles.sendButton}>
+            <Button 
+              mode="contained" 
+              onPress={handleSend} 
+              style={styles.sendButton}
+              disabled={isUploading}
+            >
               Enviar
             </Button>
           </View>
@@ -379,5 +406,32 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 4,
+  },
+  uploadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    padding: 8,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  uploadingText: {
+    marginLeft: 8,
+    fontSize: 12,
+    color: '#666',
+  },
+  selectedFileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e3f2fd',
+    padding: 4,
+    borderRadius: 8,
+    marginRight: 8,
+    maxWidth: 150,
+  },
+  selectedFileText: {
+    fontSize: 12,
+    color: '#2196f3',
+    flex: 1,
   },
 });

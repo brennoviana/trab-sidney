@@ -1,7 +1,5 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, push, set, onValue, off, remove, get, update } from 'firebase/database';
-import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCLWDil-42mV0kmIIfn6SdFk4etp8FIrZQ",
@@ -14,14 +12,10 @@ const firebaseConfig = {
   measurementId: "G-WSPW1GHQTF"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase services
 export const database = getDatabase(app);
-export const storage = getStorage(app);
 
-// Export database functions for easier use
 export { ref, push, set, onValue, off, remove, get, update };
 
 export default app;
