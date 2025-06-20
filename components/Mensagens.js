@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
     color: 'white'
   },
   backButton: {
-    marginRight: 8,
+    marginLeft: 8,
   },
   logoutButton: {
     marginLeft: 8,
