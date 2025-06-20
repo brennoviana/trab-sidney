@@ -103,7 +103,7 @@ export default function FileUpload({ onFileSelect, onUploadStart, onUploadComple
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         quality: 0.3,
         allowsMultipleSelection: false,
