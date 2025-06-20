@@ -5,7 +5,7 @@ import { Text } from 'react-native-paper';
 export default function Logo() {
   return (
     <View style={styles.container}>
-      <Text style={styles.logoText}>ChatHub</Text>
+      <Text style={styles.logoText}>BlipMensagens</Text>
       <Text style={styles.subtitle}>Conectando pessoas</Text>
     </View>
   );
@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#2196f3',
+    color: '#4462ee',
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,

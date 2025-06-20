@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { database, ref, push, set, get } from '../config/Firebase';
 
@@ -10,7 +10,6 @@ export default function Cadastro({ onBack }) {
   const [error, setError] = useState('');
 
   const handleCadastro = async () => {
-    // Validações
     if (!username.trim() || !senha.trim() || !confirmarSenha.trim()) {
       setError('Preencha todos os campos');
       return;
@@ -27,7 +26,6 @@ export default function Cadastro({ onBack }) {
     }
 
     try {
-      // Verificar se o usuário já existe
       const usuariosRef = ref(database, '/login');
       const snapshot = await get(usuariosRef);
       const usuarios = snapshot.val() || {};
@@ -41,7 +39,6 @@ export default function Cadastro({ onBack }) {
         return;
       }
 
-      // Criar novo usuário
       const newUser = {
         username,
         senha,
@@ -51,7 +48,6 @@ export default function Cadastro({ onBack }) {
       const newUserRef = push(usuariosRef);
       await set(newUserRef, newUser);
 
-      // Limpar campos e voltar para login
       setUsername('');
       setSenha('');
       setConfirmarSenha('');
@@ -65,6 +61,13 @@ export default function Cadastro({ onBack }) {
 
   return (
     <View style={styles.container}>
+
+      <Image
+        source={require('../assets/logo.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
+
       <Text style={styles.title}>Cadastro</Text>
       
       <TextInput
@@ -117,6 +120,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logo: {
+    width: 150,
+    height: 150,
+    marginBottom: 20,
   },
   title: {
     fontSize: 24,
@@ -125,14 +134,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   input: {
+    width: '100%',
     marginBottom: 15,
   },
   button: {
     marginTop: 10,
+    width: '100%',
   },
   error: {
     color: 'red',
     textAlign: 'center',
     marginBottom: 10,
   },
-}); 
+});

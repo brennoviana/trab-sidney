@@ -527,6 +527,7 @@ export default function Mensagens(props) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        
         <Text style={styles.usernameTop}>
           {showContacts ? 'Contatos' : `Conversa com ${selectedUser?.username}`}
         </Text>
