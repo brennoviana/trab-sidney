@@ -31,7 +31,6 @@ Além das funcionalidades básicas de login, cadastro e envio de mensagens, fora
 -  **Edição de Mensagens:** Permite que o usuário edite uma mensagem enviada, sendo exibido o rótulo "(editado)" após a alteração.
 -  **Exclusão de Mensagens:** O usuário pode remover mensagens que enviou.
 -  **Indicação de Leitura:** Mostra se a mensagem foi lida (✓✓ azul) ou apenas enviada (✓ cinza).
--  **Feedback Visual para Upload e Download:** Exibe carregamento enquanto arquivos estão sendo enviados ou baixados, proporcionando uma melhor experiência para o usuário.
 -  **Interface Limpa e Moderna:** Desenvolvida com React Native Paper e boas práticas de design responsivo.
 
 Essas funcionalidades tornam o aplicativo mais completo, funcional e com uma experiência próxima de aplicativos reais de mensagens.
