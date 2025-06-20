@@ -37,11 +37,11 @@ export default function Mensagens(props) {
 
   const updateTypingStatus = async (targetUser, typing) => {
     if (!targetUser) return;
-    
+
     try {
       const chatId = [props.user, targetUser].sort().join('_');
       const typingRef = ref(database, `typing/${chatId}/${props.user}`);
-      
+
       if (typing) {
         await set(typingRef, {
           typing: true,
@@ -57,23 +57,23 @@ export default function Mensagens(props) {
 
   const handleTextChange = (text) => {
     setMessage(text);
-    
+
     if (!selectedUser) return;
-    
+
     if (text.length > 0 && !isTyping) {
       setIsTyping(true);
       updateTypingStatus(selectedUser.username, true);
     }
-    
+
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    
+
     typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false);
       updateTypingStatus(selectedUser.username, false);
     }, 2000);
-    
+
     if (text.length === 0) {
       setIsTyping(false);
       updateTypingStatus(selectedUser.username, false);
@@ -85,9 +85,9 @@ export default function Mensagens(props) {
 
   const getFileIcon = (fileName) => {
     if (!fileName) return 'file';
-    
+
     const extension = fileName.split('.').pop()?.toLowerCase();
-    
+
     switch (extension) {
       case 'pdf':
         return 'file-pdf-box';
@@ -158,11 +158,11 @@ export default function Mensagens(props) {
 
     const chatId = [props.user, selectedUser.username].sort().join('_');
     const typingRef = ref(database, `typing/${chatId}`);
-    
+
     const unsubscribe = onValue(typingRef, (snapshot) => {
       const data = snapshot.val();
       const typing = {};
-      
+
       if (data) {
         Object.keys(data).forEach(username => {
           if (username !== props.user && data[username].typing) {
@@ -173,7 +173,7 @@ export default function Mensagens(props) {
           }
         });
       }
-      
+
       setTypingUsers(typing);
     });
 
@@ -193,16 +193,50 @@ export default function Mensagens(props) {
     return () => unsubscribe();
   }, []);
 
+  const markMessagesAsRead = async (chatId) => {
+    try {
+      const messagesRef = ref(database, `/chats/${chatId}`);
+      const snapshot = await get(messagesRef);
+
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const updates = {};
+
+        Object.entries(data).forEach(([messageId, message]) => {
+          if (message.sender !== props.user && !message.isRead) {
+            updates[`/chats/${chatId}/${messageId}/isRead`] = true;
+          }
+        });
+
+        if (Object.keys(updates).length > 0) {
+          await update(ref(database), updates);
+        }
+      }
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+    }
+  };
+
   useEffect(() => {
     if (!selectedUser) return;
 
     const chatId = [props.user, selectedUser.username].sort().join('_');
     const messagesRef = ref(database, `/chats/${chatId}`);
 
+    markMessagesAsRead(chatId);
+
     const onValueChange = (snapshot) => {
       const data = snapshot.val();
       if (data) {
         setMessages(Object.values(data));
+
+        const unreadMessages = Object.values(data).some(
+          msg => msg.sender !== props.user && !msg.isRead
+        );
+
+        if (unreadMessages) {
+          markMessagesAsRead(chatId);
+        }
       } else {
         setMessages([]);
       }
@@ -231,12 +265,12 @@ export default function Mensagens(props) {
         ...newMessage,
         id: newMessageRef.key
       });
-      
+
       setMessage('');
       setSelectedFile(null);
       setIsTyping(false);
       updateTypingStatus(selectedUser.username, false);
-      
+
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
@@ -249,34 +283,34 @@ export default function Mensagens(props) {
   const downloadDocument = async (file) => {
     try {
       console.log('📥 Starting document download for:', file.name);
-      
+
       setDownloadingFiles(prev => new Set(prev).add(file.fileId || file.name));
-      
+
       if (file.isBase64 && file.fileId) {
         console.log('📄 Retrieving document from database:', file.fileId);
-        
+
         const fileRef = ref(database, `photos/${file.fileId}`);
         const snapshot = await get(fileRef);
-        
+
         if (!snapshot.exists()) {
           Alert.alert('Erro', 'Arquivo não encontrado no banco de dados.');
           return;
         }
-        
+
         const fileData = snapshot.val();
         const base64Data = fileData.base64;
-        
+
         const fileName = file.name || 'document';
         const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
-        
+
         console.log('💾 Saving file to:', fileUri);
-        
+
         await FileSystem.writeAsStringAsync(fileUri, base64Data, {
           encoding: FileSystem.EncodingType.Base64,
         });
-        
+
         console.log('✅ File saved successfully');
-        
+
         Alert.alert(
           'Download Concluído! 📥',
           `Arquivo "${fileName}" foi salvo.\n\nDeseja abrir o arquivo?`,
@@ -288,12 +322,12 @@ export default function Mensagens(props) {
             }
           ]
         );
-        
+
       } else {
         console.log('📎 Handling regular file');
         openDocument(file.uri, file.name);
       }
-      
+
     } catch (error) {
       console.error('❌ Erro ao baixar documento:', error);
       Alert.alert('Erro', 'Não foi possível baixar o documento.');
@@ -309,15 +343,15 @@ export default function Mensagens(props) {
   const openDocument = async (fileUri, fileName) => {
     try {
       console.log('🔍 Trying to open document:', fileUri);
-      
+
       const fileInfo = await FileSystem.getInfoAsync(fileUri);
       if (!fileInfo.exists) {
         Alert.alert('Erro', 'Arquivo não encontrado.');
         return;
       }
-      
+
       console.log('📄 File info:', fileInfo);
-      
+
       const canOpen = await Linking.canOpenURL(fileUri);
       if (canOpen) {
         await Linking.openURL(fileUri);
@@ -328,7 +362,7 @@ export default function Mensagens(props) {
           `O arquivo "${fileName}" foi salvo em:\n\n${fileUri}\n\nVocê pode acessá-lo pelo gerenciador de arquivos do seu dispositivo.`
         );
       }
-      
+
     } catch (error) {
       console.error('❌ Erro ao abrir documento:', error);
       Alert.alert(
@@ -357,7 +391,7 @@ export default function Mensagens(props) {
   const renderContact = ({ item }) => {
     const isOnline = onlineUsers[item.username]?.online;
     const lastSeen = onlineUsers[item.username]?.lastSeen;
-    
+
     return (
       <TouchableOpacity
         style={styles.contactItem}
@@ -547,7 +581,7 @@ export default function Mensagens(props) {
             <TextInput
               label="Mensagem"
               value={message}
-              onChangeText={setMessage}
+              onChangeText={handleTextChange}
               style={styles.input}
               disabled={isUploading}
             />
