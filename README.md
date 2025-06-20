@@ -38,7 +38,7 @@ Essas funcionalidades tornam o aplicativo mais completo, funcional e com uma exp
 ## 🎥 Demonstração (Opcional)
 
 🔗 **Link do vídeo demonstrativo:**  
-*https://drive.google.com/file/d/1L63PZMXQfzrpTM7bNRWZwVLdi2OtmdMz/view?usp=drive_link*
+*https://drive.google.com/file/d/1u_gP9Itc6W1T2dtKcwvsMJMkCIhzEfcV/view*
 
 ---
 
