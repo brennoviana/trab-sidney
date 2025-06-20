@@ -1,0 +1,34 @@
+{
+  "login": {
+    "-OQzLF0-YMtSU-xgjPA8": {
+      "senha": "12",
+      "username": "12"
+    },    
+    "-OR45rWo_YwlkPxymfKa": {
+      "senha": "123",
+      "username": "Sidney"
+    },
+    "-ORLn7XRkdErCPbN5GQ5": {
+      "senha": "123",
+      "username": "usuario1"
+    },    
+    "-OR_yjWm_npq9HPRKDM2": {
+      "senha": "123",
+      "username": "flamengo"
+    }
+  },
+  "messages": {
+    "-ORYR_dpdphPcFRiTpB9": {
+      "id": "-ORYR_dpdphPcFRiTpB9",
+      "text": "Ola turma!",
+      "timestamp": 1748646386527,
+      "username": "flamengo"
+    },
+    "-ORa3CgkJKtiI48pNQG5": {
+      "id": "-ORa3CgkJKtiI48pNQG5",
+      "text": "bom dia",
+      "timestamp": 1748690328851,
+      "username": "flamengo"
+    }
+  }
+}

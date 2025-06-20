@@ -1,0 +1,27 @@
+{
+  "license": "0BSD",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^14.0.0",
+    "expo": "~53.0.0",
+    "expo-status-bar": "~2.2.3",
+    "expo-image-picker": "~14.7.1",
+    "expo-document-picker": "~11.10.1",
+    "expo-file-system": "~16.0.5",
+    "firebase": "*",
+    "react": "19.0.0",
+    "react-native": "0.79.3",
+    "react-native-paper": "^5.11.6",
+    "react-native-safe-area-context": "5.4.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0"
+  },
+  "private": true
+}
