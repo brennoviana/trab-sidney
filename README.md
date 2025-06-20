@@ -1,8 +1,6 @@
 <p align="center"> <img src="./assets/logo.png" alt="Logo" width="150"/> </p> <h1 align="center">📱 App de Chat - Prova P2</h1> <p align="center"> <b>Universidade de Vassouras</b><br/> Curso de Engenharia de Software<br/> Disciplina: Laboratório de Desenvolvimento de Aplicativos Híbridos<br/> Profa.: Sidney<br/> 
 🚀 Sobre o Projeto:
-Aplicativo de Chat em Tempo Real desenvolvido para a Prova P2.
-
-# 📱 Aplicativo de Chat - Prova P2
+Aplicativo de Chat em Tempo Real desenvolvido para a P2.
 
 ##  Integrantes do Grupo
 - **Nomes:** Brenno Viana Coelho - 202022642, Raphael Cardim Calvet - 202210809, Julia Reis Rodrigues - 202212049, Joao Pedro de Abreu - 202210964, Thiago Cardim Calvelt - 202222591
