@@ -7,7 +7,7 @@ Aplicativo de Chat em Tempo Real desenvolvido para a Prova P2.
 ##  Integrantes do Grupo
 - **Nomes:** Brenno Viana Coelho - 202022642, Raphael Cardim Calvet - 202210809, Julia Reis Rodrigues - 202212049, Joao Pedro de Abreu - 202210964, Thiago Cardim Calvelt - 202222591
 - **Curso:** Engenharia de Software  
-- **Universidade:** Universidade de Vassouras  
+- **Universidade:** Universidade de Vassouras
 
 ---
 
